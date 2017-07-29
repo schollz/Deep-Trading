@@ -30,7 +30,7 @@ def load_snp_returns():
 
 
 def load_snp_close():
-    f = open('table.csv', 'rb').readlines()[1:]
+    f = open('table.csv', 'r').readlines()[1:]
     raw_data = []
     raw_dates = []
     for line in f:
@@ -88,13 +88,13 @@ def shuffle_in_unison(a, b):
 
 
 def create_Xt_Yt(X, y, percentage=0.8):
-    X_train = X[0:len(X) * percentage]
-    Y_train = y[0:len(y) * percentage]
+    X_train = X[0:int(len(X) * percentage)]
+    Y_train = y[0:int(len(y) * percentage)]
     
     X_train, Y_train = shuffle_in_unison(X_train, Y_train)
 
-    X_test = X[len(X) * percentage:]
-    Y_test = y[len(X) * percentage:]
+    X_test = X[int(len(X) * percentage):]
+    Y_test = y[int(len(X) * percentage):]
 
     return X_train, X_test, Y_train, Y_test
 

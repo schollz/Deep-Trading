@@ -12,13 +12,42 @@ import matplotlib.pylab as plt
 import datetime as dt
 import time
 
-from keras.models import Sequential, Graph
+
+from processing import *
+
+
+
+
+TRAIN_SIZE = 30
+TARGET_TIME = 1
+LAG_SIZE = 1
+EMB_SIZE = 1
+
+print ('Data loading...'  )
+timeseries, dates = load_snp_close()
+dates = [dt.datetime.strptime(d,'%Y-%m-%d').date() for d in dates]
+plt.plot(dates, timeseries)
+
+TRAIN_SIZE = 20
+TARGET_TIME = 1
+LAG_SIZE = 1
+EMB_SIZE = 1
+
+X, Y = split_into_chunks(timeseries, TRAIN_SIZE, TARGET_TIME, LAG_SIZE, binary=False, scale=True)
+X, Y = np.array(X), np.array(Y)
+print(X)
+X_train, X_test, Y_train, Y_test = create_Xt_Yt(X, Y, percentage=0.9)
+
+Xp, Yp = split_into_chunks(timeseries, TRAIN_SIZE, TARGET_TIME, LAG_SIZE, binary=False, scale=False)
+Xp, Yp = np.array(Xp), np.array(Yp)
+X_trainp, X_testp, Y_trainp, Y_testp = create_Xt_Yt(Xp, Yp, percentage=0.9)
+
+
+from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.layers.recurrent import LSTM, GRU
 from keras.layers import Convolution1D, MaxPooling1D
 from keras.callbacks import Callback
-from processing import *
-
 
 class TrainingHistory(Callback):
     def on_train_begin(self, logs={}):
@@ -36,33 +65,7 @@ class TrainingHistory(Callback):
             pred = model.predict(X_train)
             self.predictions.append(pred)
 
-
-
-TRAIN_SIZE = 30
-TARGET_TIME = 1
-LAG_SIZE = 1
-EMB_SIZE = 1
-
-print 'Data loading...'  
-timeseries, dates = load_snp_close()
-dates = [dt.datetime.strptime(d,'%Y-%m-%d').date() for d in dates]
-plt.plot(dates, timeseries)
-
-TRAIN_SIZE = 20
-TARGET_TIME = 1
-LAG_SIZE = 1
-EMB_SIZE = 1
-
-X, Y = split_into_chunks(timeseries, TRAIN_SIZE, TARGET_TIME, LAG_SIZE, binary=False, scale=True)
-X, Y = np.array(X), np.array(Y)
-X_train, X_test, Y_train, Y_test = create_Xt_Yt(X, Y, percentage=0.9)
-
-Xp, Yp = split_into_chunks(timeseries, TRAIN_SIZE, TARGET_TIME, LAG_SIZE, binary=False, scale=False)
-Xp, Yp = np.array(Xp), np.array(Yp)
-X_trainp, X_testp, Y_trainp, Y_testp = create_Xt_Yt(Xp, Yp, percentage=0.9)
-
-
-print 'Building model...'
+print ('Building model...')
 model = Sequential()
 model.add(Dense(500, input_shape = (TRAIN_SIZE, )))
 model.add(Activation('relu'))
@@ -81,7 +84,7 @@ model.fit(X_train,
           verbose=1, 
           validation_split=0.1)
 score = model.evaluate(X_test, Y_test, batch_size=128)
-print score
+print (score)
 
 
 params = []
@@ -101,7 +104,7 @@ for pred, par in zip(predicted, params):
     
 
 mse = mean_squared_error(predicted, new_predicted)
-print mse
+print (mse)
 
 try:
     fig = plt.figure()
@@ -111,4 +114,4 @@ try:
     plt.plot(new_predicted[:150], color='red') # ORANGE - restored PREDICTION
     plt.show()
 except Exception as e:
-    print str(e)
+    print (str(e))
